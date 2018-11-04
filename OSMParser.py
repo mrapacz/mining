@@ -134,20 +134,20 @@ def read_osm(filename_or_stream, only_roads=True):
         if only_roads and 'highway' not in w.tags:
             continue
 
-        if ('oneway' in w.tags):
-            if (w.tags['oneway'] == 'yes'):
+        if 'oneway' in w.tags:
+            if w.tags['oneway'] == 'yes':
                 # ONLY ONE DIRECTION
-                #G.add_path(w.nds, id=w.id)
-                w.add_to_graph(G, oneway = True)
+                # G.add_path(w.nds, id=w.id)
+                w.add_to_graph(G, oneway=True)
             else:
                 # BOTH DIRECTION
-                #G.add_path(w.nds, id=w.id)
-                #G.add_path(w.nds[::-1], id=w.id)
+                # G.add_path(w.nds, id=w.id)
+                # G.add_path(w.nds[::-1], id=w.id)
                 w.add_to_graph(G)
         else:
             # BOTH DIRECTION
-            #G.add_path(w.nds, id=w.id)
-            #G.add_path(w.nds[::-1], id=w.id)
+            # G.add_path(w.nds, id=w.id)
+            # G.add_path(w.nds[::-1], id=w.id)
             w.add_to_graph(G)
 
     ## Complete the used nodes' information
@@ -212,13 +212,24 @@ class Way:
 
         return ret
 
-    def add_to_graph(self, graph, oneway = False):
-        for i, val in enumerate(self.nds):
-            if i != len(self.nds)-1:
-                graph.add_edge(val, self.nds[i+1], id = self.id+"_"+str(i))
-                if not oneway:
-                    graph.add_edge(self.nds[i+1], val, id = self.id+"_"+str(i)+"_d")
+    def add_to_graph(self, graph, oneway=False):
+        nodes = self.nds
+        for node_index, node in enumerate(nodes):
+            if node_index < len(nodes) - 1:
+                next_node = nodes[node_index + 1]
+                
+                graph.add_edge(
+                    node,
+                    next_node,
+                    id="{}_{}".format(self.id, node_index),
+                )
 
+                if not oneway:
+                    graph.add_edge(
+                        next_node,
+                        node,
+                        id="{}_{}_d".format(self.id, node_index),
+                    )
 
 
 class OSM:
@@ -285,4 +296,3 @@ class OSM:
             for split_way in split_ways:
                 new_ways[split_way.id] = split_way
         self.ways = new_ways
-
