@@ -13,16 +13,16 @@ with open(MAP_FILE) as f:
     logging.info("Map parsed")
 
     bb = nx.betweenness_centrality(G)
-    nx.set_node_attributes(G, bb, 'betweenness_centrality_n')
+    nx.set_node_attributes(G, bb, 'betweenness')
 
     logging.info("Betweenness centrality for nodes computed")
 
     bbe = nx.edge_betweenness_centrality(G, normalized=False)
-    nx.set_edge_attributes(G, bbe, 'betweenness_centrality_e')
+    nx.set_edge_attributes(G, bbe, 'betweenness')
 
     logging.info("Betweenness centrality for edges computed")
 
     output_file = MAP_FILE + ".gml"
     nx.write_gml(G, output_file)
-    
+
     logging.info("Output saved to {}".format(output_file))
