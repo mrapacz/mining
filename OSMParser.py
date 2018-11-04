@@ -137,15 +137,18 @@ def read_osm(filename_or_stream, only_roads=True):
         if ('oneway' in w.tags):
             if (w.tags['oneway'] == 'yes'):
                 # ONLY ONE DIRECTION
-                G.add_path(w.nds, id=w.id)
+                #G.add_path(w.nds, id=w.id)
+                w.add_to_graph(G, oneway = True)
             else:
                 # BOTH DIRECTION
-                G.add_path(w.nds, id=w.id)
-                G.add_path(w.nds[::-1], id=w.id)
+                #G.add_path(w.nds, id=w.id)
+                #G.add_path(w.nds[::-1], id=w.id)
+                w.add_to_graph(G)
         else:
             # BOTH DIRECTION
-            G.add_path(w.nds, id=w.id)
-            G.add_path(w.nds[::-1], id=w.id)
+            #G.add_path(w.nds, id=w.id)
+            #G.add_path(w.nds[::-1], id=w.id)
+            w.add_to_graph(G)
 
     ## Complete the used nodes' information
     for n_id in G.nodes():
@@ -208,6 +211,14 @@ class Way:
             i += 1
 
         return ret
+
+    def add_to_graph(self, graph, oneway = False):
+        for i, val in enumerate(self.nds):
+            if i != len(self.nds)-1:
+                graph.add_edge(val, self.nds[i+1], id = self.id+"_"+str(i))
+                if not oneway:
+                    graph.add_edge(self.nds[i+1], val, id = self.id+"_"+str(i)+"_d")
+
 
 
 class OSM:
@@ -274,3 +285,4 @@ class OSM:
             for split_way in split_ways:
                 new_ways[split_way.id] = split_way
         self.ways = new_ways
+
