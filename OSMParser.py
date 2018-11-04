@@ -150,19 +150,24 @@ def read_osm(filename_or_stream, only_roads=True):
             # G.add_path(w.nds[::-1], id=w.id)
             w.add_to_graph(G)
 
-    ## Complete the used nodes' information
+    # Complete the used nodes' information
     for n_id in G.nodes():
         n = osm.nodes[n_id]
         G.node[n_id]['lat'] = n.lat
         G.node[n_id]['lon'] = n.lon
         G.node[n_id]['id'] = n.id
 
-    ## Estimate the length of each way
-    # for u, v, d in G.edges(data=True):
-    #     distance = haversine(G.node[u]['lon'], G.node[u]['lat'], G.node[v]['lon'], G.node[v]['lat'],
-    #                          unit_m=True)  # Give a realistic distance estimation (neither EPSG nor projection nor reference system are specified)
-    # 
-    #     G.add_weighted_edges_from([(u, v, distance)], weight='length')
+    # Estimate the length of each way
+    for u, v, d in G.edges(data=True):
+        distance = haversine(
+            G.node[u]['lon'],
+            G.node[u]['lat'],
+            G.node[v]['lon'],
+            G.node[v]['lat'],
+            unit_m=True,
+        )  # Give a realistic distance estimation (neither EPSG nor projection nor reference system are specified)
+
+        G.add_weighted_edges_from([(u, v, distance)], weight='length')
 
     return G
 
@@ -217,7 +222,7 @@ class Way:
         for node_index, node in enumerate(nodes):
             if node_index < len(nodes) - 1:
                 next_node = nodes[node_index + 1]
-                
+
                 graph.add_edge(
                     node,
                     next_node,
