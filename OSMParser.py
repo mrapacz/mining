@@ -129,10 +129,23 @@ def read_osm(filename_or_stream, only_roads=True):
     osm = OSM(filename_or_stream)
     G = networkx.DiGraph()
 
+    highway_types = (
+        'motorway',
+        'trunk',
+        'primary',
+        'secondary',
+        'tertiary',
+        'unclassified',
+        'residential',
+    )
+
     ## Add ways
     for w in osm.ways.values():
         if only_roads and 'highway' not in w.tags:
             continue
+
+        # if w.tags['highway'] not in highway_types:
+        #     continue
 
         if 'oneway' in w.tags:
             if w.tags['oneway'] == 'yes':
@@ -219,6 +232,11 @@ class Way:
 
     def add_to_graph(self, graph, oneway=False):
         nodes = self.nds
+        # if 'name' not in self.tags:
+        #     import pdb;
+        #     pdb.set_trace()
+        # else:
+        # name = self.tags['name']
         for node_index, node in enumerate(nodes):
             if node_index < len(nodes) - 1:
                 next_node = nodes[node_index + 1]
@@ -227,6 +245,7 @@ class Way:
                     node,
                     next_node,
                     id="{}_{}".format(self.id, node_index),
+                    # name=name,
                 )
 
                 if not oneway:
@@ -234,6 +253,7 @@ class Way:
                         next_node,
                         node,
                         id="{}_{}_d".format(self.id, node_index),
+                        # name=name,
                     )
 
 
