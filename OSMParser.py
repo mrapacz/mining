@@ -19,6 +19,8 @@ from math import radians, cos, sin, asin, sqrt
 import copy
 
 # Graph module
+from typing import Tuple, Dict
+
 import networkx
 
 # Specific modules
@@ -109,7 +111,7 @@ def download_osm(left, bottom, right, top, proxy=False, proxyHost="10.0.4.2", pr
     return fp
 
 
-def read_osm(filename_or_stream, only_roads=True):
+def read_osm(filename_or_stream, only_roads=True) -> Tuple[networkx.DiGraph, networkx.DiGraph, Dict]:
     """Read graph in OSM format from file specified by name or by stream object.
     Parameters
     ----------
@@ -129,6 +131,10 @@ def read_osm(filename_or_stream, only_roads=True):
     osm = OSM(filename_or_stream)
     G = networkx.DiGraph()
 
+    # optimization
+    G_small = networkx.DiGraph()
+    mapping = {}
+
     highway_types = (
         'motorway',
         'trunk',
@@ -144,45 +150,38 @@ def read_osm(filename_or_stream, only_roads=True):
         if only_roads and 'highway' not in w.tags:
             continue
 
-        # if w.tags['highway'] not in highway_types:
-        #     continue
+        if w.tags['highway'] not in highway_types:
+            continue
 
-        if 'oneway' in w.tags:
-            if w.tags['oneway'] == 'yes':
-                # ONLY ONE DIRECTION
-                # G.add_path(w.nds, id=w.id)
-                w.add_to_graph(G, oneway=True)
-            else:
-                # BOTH DIRECTION
-                # G.add_path(w.nds, id=w.id)
-                # G.add_path(w.nds[::-1], id=w.id)
-                w.add_to_graph(G)
+        if 'oneway' in w.tags and w.tags['oneway'] == 'yes':
+            w.add_to_graph(G, G_small, mapping, oneway=True)
         else:
-            # BOTH DIRECTION
-            # G.add_path(w.nds, id=w.id)
-            # G.add_path(w.nds[::-1], id=w.id)
-            w.add_to_graph(G)
+            w.add_to_graph(G, G_small, mapping)
 
-    # Complete the used nodes' information
-    for n_id in G.nodes():
-        n = osm.nodes[n_id]
-        G.node[n_id]['lat'] = n.lat
-        G.node[n_id]['lon'] = n.lon
-        G.node[n_id]['id'] = n.id
+    def complete_information(G, osm):
+        # Complete the used nodes' information
+        for n_id in G.nodes():
+            n = osm.nodes[n_id]
+            G.node[n_id]['lat'] = n.lat
+            G.node[n_id]['lon'] = n.lon
+            G.node[n_id]['id'] = n.id
 
-    # Estimate the length of each way
-    for u, v, d in G.edges(data=True):
-        distance = haversine(
-            G.node[u]['lon'],
-            G.node[u]['lat'],
-            G.node[v]['lon'],
-            G.node[v]['lat'],
-            unit_m=True,
-        )  # Give a realistic distance estimation (neither EPSG nor projection nor reference system are specified)
+        # Estimate the length of each way
+        for u, v, d in G.edges(data=True):
+            distance = haversine(
+                G.node[u]['lon'],
+                G.node[u]['lat'],
+                G.node[v]['lon'],
+                G.node[v]['lat'],
+                unit_m=True,
+            )  # Give a realistic distance estimation (neither EPSG nor projection nor reference system are specified)
 
-        G.add_weighted_edges_from([(u, v, distance)], weight='length')
+            G.add_weighted_edges_from([(u, v, distance)], weight='length')
 
-    return G
+    complete_information(G, osm)
+    complete_information(G_small, osm)
+
+    return G, G_small, mapping
 
 
 class Node:
@@ -230,31 +229,47 @@ class Way:
 
         return ret
 
-    def add_to_graph(self, graph, oneway=False):
+    def add_to_graph(self, graph, graph_small, mapping, oneway=False):
         nodes = self.nds
-        # if 'name' not in self.tags:
-        #     import pdb;
-        #     pdb.set_trace()
-        # else:
-        # name = self.tags['name']
+        if 'name' not in self.tags:
+            name = ""
+        else:
+            name = self.tags['name']
+
+        middle_edge_idx = len(nodes) // 2
+
+        related_edges = []
         for node_index, node in enumerate(nodes):
             if node_index < len(nodes) - 1:
                 next_node = nodes[node_index + 1]
 
+                current_name = name if node_index == middle_edge_idx else ""
+
+                edge_id = "{}_{}".format(self.id, node_index)
                 graph.add_edge(
                     node,
                     next_node,
-                    id="{}_{}".format(self.id, node_index),
-                    # name=name,
+                    id=edge_id,
+                    name=current_name,
                 )
+                related_edges.append((node, next_node))
 
                 if not oneway:
+                    edge_id = "{}_{}_d".format(self.id, node_index)
                     graph.add_edge(
                         next_node,
                         node,
-                        id="{}_{}_d".format(self.id, node_index),
-                        # name=name,
+                        id=edge_id,
+                        name="",
                     )
+                    related_edges.append((next_node, node))
+
+        mapping[self.id] = related_edges
+        graph_small.add_edge(
+            nodes[0],
+            nodes[-1],
+            id=self.id
+        )
 
 
 class OSM:
