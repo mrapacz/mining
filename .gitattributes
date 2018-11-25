@@ -1,0 +1,2 @@
+map_krk_regular.gml filter=lfs diff=lfs merge=lfs -text
+map_small_krak.gml filter=lfs diff=lfs merge=lfs -text
