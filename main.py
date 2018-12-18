@@ -9,7 +9,7 @@ KRK = "map_krk_regular"
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s: %(message)s")
 
-MAP_FILE: str = SMALL_KRK
+MAP_FILE: str = KRK
 
 
 def main():
@@ -18,6 +18,13 @@ def main():
         G, G_small, mapping = read_osm(f)
 
         logging.info("Map parsed")
+
+        first_id = "206343915"
+        second_id = "206348695"
+        G.add_edge(first_id, second_id, name="DODANA ULICA", id="dodany_edge_xd")
+        G_small.add_edge(first_id, second_id, name="DODANA ULICA", id="dodany_edge_xd")
+
+        mapping["dodany_edge_xd"] = [(first_id, second_id)]
 
         c = Counter([len(values) for values in mapping.values()])
         logging.info("Mapping optimization: {}".format(c))
