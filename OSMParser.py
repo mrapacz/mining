@@ -10,7 +10,7 @@ Added :
 - : distance computation to estimate length of each ways (useful to compute the shortest path)
 
 Copyright (C) 2017 Loïc Messal (github : Tofull)
-
+Copyright (C) 2019 Maciej Rapacz, Jakub Tustanowski (github : mrapacz)
 """
 
 ## Modules
@@ -46,69 +46,6 @@ def haversine(lon1, lat1, lon2, lat2, unit_m=True):
     if (unit_m):
         r *= 1000
     return c * r
-
-
-def download_osm(left, bottom, right, top, proxy=False, proxyHost="10.0.4.2", proxyPort="3128", cache=False,
-                 cacheTempDir="/tmp/tmpOSM/", verbose=True):
-    """ Return a filehandle to the downloaded data from osm api."""
-
-    import urllib.request  # To request the web
-
-    if (cache):
-        ## cached tile filename
-        cachedTileFilename = "osm_map_{:.8f}_{:.8f}_{:.8f}_{:.8f}.map".format(left, bottom, right, top)
-
-        if (verbose):
-            print("Cached tile filename :", cachedTileFilename)
-
-        Path(cacheTempDir).mkdir(parents=True, exist_ok=True)  ## Create cache path if not exists
-
-        osmFile = Path(
-            cacheTempDir + cachedTileFilename).resolve()  ## Replace the relative cache folder path to absolute path
-
-        if osmFile.is_file():
-            # download from the cache folder
-            if verbose:
-                print("Tile loaded from the cache folder.")
-
-            fp = urllib.request.urlopen("file://" + str(osmFile))
-            return fp
-
-    if proxy:
-        # configure the urllib request with the proxy
-        proxy_handler = urllib.request.ProxyHandler(
-            {'https': 'https://' + proxyHost + ":" + proxyPort, 'http': 'http://' + proxyHost + ":" + proxyPort})
-        opener = urllib.request.build_opener(proxy_handler)
-        urllib.request.install_opener(opener)
-
-    request = "http://api.openstreetmap.org/api/0.6/map?bbox=%f,%f,%f,%f" % (left, bottom, right, top)
-
-    if verbose:
-        print("Download the tile from osm web api ... in progress")
-        print("Request :", request)
-
-    fp = urllib.request.urlopen(request)
-
-    if verbose:
-        print("OSM Tile downloaded")
-
-    if cache:
-        if verbose:
-            print("Write osm tile in the cache"
-                  )
-        content = fp.read()
-        with open(osmFile, 'wb') as f:
-            f.write(content)
-
-        if osmFile.is_file():
-            if verbose:
-                print("OSM tile written in the cache")
-
-            fp = urllib.request.urlopen(
-                "file://" + str(osmFile))  ## Reload the osm tile from the cache (because fp.read moved the cursor)
-            return fp
-
-    return fp
 
 
 def read_osm(filename_or_stream, only_roads=True) -> Tuple[networkx.DiGraph, networkx.DiGraph, Dict]:
