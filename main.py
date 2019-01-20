@@ -1,6 +1,7 @@
+import random
 from collections import Counter
 
-from OSMParser import read_osm
+from OSMParser import read_osm, haversine
 import logging
 import networkx as nx
 
@@ -19,12 +20,39 @@ def main():
 
         logging.info("Map parsed")
 
-        first_id = "206343915"
-        second_id = "206348695"
-        G.add_edge(first_id, second_id, name="DODANA ULICA", id="dodany_edge_xd")
-        G_small.add_edge(first_id, second_id, name="DODANA ULICA", id="dodany_edge_xd")
+        node_ids = (
+            ("283114559", "206373246"),
+            ("1606819475", "251691058"),
+            ("1714504148", "272496167"),
+            ("1243483338", "4993281883"),
+        )
 
-        mapping["dodany_edge_xd"] = [(first_id, second_id)]
+        for idx, (node_a, node_b) in enumerate(node_ids):
+            edge_id = "new_edge_{}".format(idx)
+            length = haversine(
+                G.node[node_a]['lon'],
+                G.node[node_a]['lat'],
+                G.node[node_b]['lon'],
+                G.node[node_b]['lat'],
+            )
+            logging.info("Adding edge between {} and {} with length {}m".format(node_a, node_b, length))
+            G.add_edge(
+                node_a,
+                node_b,
+                name="NEW STREET",
+                id=edge_id,
+                length=length,
+            )
+
+            G_small.add_edge(
+                node_a,
+                node_b,
+                name="NEW STREET",
+                id=edge_id,
+                length=length,
+            )
+
+            mapping[edge_id] = [(node_a, node_b)]
 
         c = Counter([len(values) for values in mapping.values()])
         logging.info("Mapping optimization: {}".format(c))
