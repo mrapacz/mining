@@ -58,10 +58,29 @@ def main():
         logging.info("Mapping optimization: {}".format(c))
         logging.info("Edges: old: {}, optimized: {}".format(G.number_of_edges(), G_small.number_of_edges()))
 
+        # pagerank
+
+        small_pagerank = nx.pagerank(G_small, weight='length')
+        main_pagerank = {}
+
+        nx.set_node_attributes(G, small_pagerank, 'pagerank')
+
+        logging.info("Small pagerank computed")
+
+        # for node_id, value in small_pagerank.items():
+        #     edge_data = G_small.get_edge_data(u, v)
+        #     general_edge_id = edge_data['id']
+        #     for edge in mapping[general_edge_id]:
+        #         main_pagerank[edge] = value
+
+        logging.info("Main pagerankcomputed")
+
+        # betweenness centrality
+
         small_betweenness = nx.edge_betweenness_centrality(G_small, normalized=False, weight='length')
+        logging.info("Small betweenness computed")
         main_betweenness = {}
 
-        logging.info("Small betweenness computed")
         for (u, v), value in small_betweenness.items():
             edge_data = G_small.get_edge_data(u, v)
             general_edge_id = edge_data['id']
@@ -71,6 +90,7 @@ def main():
         logging.info("Main betweenness computed")
 
         nx.set_edge_attributes(G, main_betweenness, 'betweenness')
+
         #
         # logging.info("Betweenness centrality for edges computed")
         #
