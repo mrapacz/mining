@@ -27,32 +27,32 @@ def main():
             ("1243483338", "4993281883"),
         )
 
-        for idx, (node_a, node_b) in enumerate(node_ids):
-            edge_id = "new_edge_{}".format(idx)
-            length = haversine(
-                G.node[node_a]['lon'],
-                G.node[node_a]['lat'],
-                G.node[node_b]['lon'],
-                G.node[node_b]['lat'],
-            )
-            logging.info("Adding edge between {} and {} with length {}m".format(node_a, node_b, length))
-            G.add_edge(
-                node_a,
-                node_b,
-                name="NEW STREET",
-                id=edge_id,
-                length=length,
-            )
-
-            G_small.add_edge(
-                node_a,
-                node_b,
-                name="NEW STREET",
-                id=edge_id,
-                length=length,
-            )
-
-            mapping[edge_id] = [(node_a, node_b)]
+        # for idx, (node_a, node_b) in enumerate(node_ids):
+        #     edge_id = "new_edge_{}".format(idx)
+        #     length = haversine(
+        #         G.node[node_a]['lon'],
+        #         G.node[node_a]['lat'],
+        #         G.node[node_b]['lon'],
+        #         G.node[node_b]['lat'],
+        #     )
+        #     logging.info("Adding edge between {} and {} with length {}m".format(node_a, node_b, length))
+        #     G.add_edge(
+        #         node_a,
+        #         node_b,
+        #         name="NEW STREET",
+        #         id=edge_id,
+        #         length=length,
+        #     )
+        #
+        #     G_small.add_edge(
+        #         node_a,
+        #         node_b,
+        #         name="NEW STREET",
+        #         id=edge_id,
+        #         length=length,
+        #     )
+        #
+        #     mapping[edge_id] = [(node_a, node_b)]
 
         c = Counter([len(values) for values in mapping.values()])
         logging.info("Mapping optimization: {}".format(c))
@@ -77,19 +77,19 @@ def main():
 
         # betweenness centrality
 
-        small_betweenness = nx.edge_betweenness_centrality(G_small, normalized=False, weight='length')
-        logging.info("Small betweenness computed")
-        main_betweenness = {}
-
-        for (u, v), value in small_betweenness.items():
-            edge_data = G_small.get_edge_data(u, v)
-            general_edge_id = edge_data['id']
-            for edge in mapping[general_edge_id]:
-                main_betweenness[edge] = value
-
-        logging.info("Main betweenness computed")
-
-        nx.set_edge_attributes(G, main_betweenness, 'betweenness')
+        # small_betweenness = nx.edge_betweenness_centrality(G_small, normalized=False, weight='length')
+        # logging.info("Small betweenness computed")
+        # main_betweenness = {}
+        #
+        # for (u, v), value in small_betweenness.items():
+        #     edge_data = G_small.get_edge_data(u, v)
+        #     general_edge_id = edge_data['id']
+        #     for edge in mapping[general_edge_id]:
+        #         main_betweenness[edge] = value
+        #
+        # logging.info("Main betweenness computed")
+        #
+        # nx.set_edge_attributes(G, main_betweenness, 'betweenness')
 
         #
         # logging.info("Betweenness centrality for edges computed")
